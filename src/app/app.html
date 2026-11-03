@@ -1,0 +1,874 @@
+<!-- Stride Sneaker Store - Slush Aesthetic Universe -->
+<div class="min-h-screen bg-[#f4f7fb] text-carbon flex flex-col font-sans selection:bg-electric-blue selection:text-white pb-20">
+
+  <!-- Success Notification Toast -->
+  @if (checkoutSuccessMessage) {
+    <div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-mint-pop border-2 border-black text-carbon px-6 py-3.5 rounded-pill shadow-sticker-lg font-black text-sm flex items-center gap-3 animate-bounce">
+      <svg class="w-5 h-5 text-carbon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span>{{ checkoutSuccessMessage }}</span>
+    </div>
+  }
+
+  <!-- 1. Header & Navigation -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-black">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo / Sticker Mark -->
+      <a href="#" class="flex items-center gap-3.5 group cursor-pointer">
+        <div class="w-12 h-12 rounded-full border border-black overflow-hidden bg-white shadow-sticker transition-transform group-hover:scale-105 group-hover:rotate-3">
+          <img src="logo.jpg" alt="Stride Logo" class="w-full h-full object-cover">
+        </div>
+        <div class="flex flex-col">
+          <span class="text-2xl font-black tracking-tighter uppercase leading-none font-display text-carbon">
+            STRIDE<span class="text-ember">.</span>
+          </span>
+          <span class="text-[10px] font-black tracking-widest text-electric-blue uppercase">Sneakers & Decals</span>
+        </div>
+      </a>
+
+      <!-- Search Bar -->
+      <div class="hidden md:flex flex-1 max-w-md mx-4">
+        <div class="relative w-full">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            placeholder="Pesquisar Dunk, Jordan, Campus, New Balance..."
+            class="w-full pl-11 pr-4 py-2.5 rounded-pill border border-black bg-[#f8fbff] text-xs font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-blue transition-all"
+          >
+          <svg class="w-4 h-4 text-carbon absolute left-4 top-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          @if (searchQuery) {
+            <button (click)="searchQuery = ''; onSearch()" class="absolute right-3.5 top-3 text-xs font-black text-gray-500 hover:text-black">✕</button>
+          }
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2.5 sm:gap-3">
+
+        <!-- Wishlist Button -->
+        <button
+          (click)="wishlist.openModal()"
+          class="relative slush-pill px-3.5 py-2 bg-white text-carbon hover:bg-lavender hover:shadow-sticker text-xs font-bold gap-2">
+          <svg class="w-4 h-4 text-ember fill-ember" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span class="hidden sm:inline">Favoritos</span>
+          <span class="bg-carbon text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
+            {{ (wishlist.wishlistIds$ | async)?.size || 0 }}
+          </span>
+        </button>
+
+        <!-- Cart Button -->
+        <button
+          (click)="cart.toggleDrawer()"
+          class="relative slush-pill px-4 py-2 bg-electric-blue text-white hover:shadow-sticker text-xs font-black gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+          </svg>
+          <span class="hidden sm:inline">Carrinho</span>
+          <span class="bg-sunburst text-carbon text-[10px] font-black px-1.5 py-0.5 rounded-full border border-black">
+            {{ cart.getTotalCount() }}
+          </span>
+        </button>
+
+        <!-- User / Auth Button -->
+        @if (auth.isAuthenticated) {
+          <div class="flex items-center gap-2">
+            <button
+              (click)="openOrdersModal()"
+              class="slush-pill px-3.5 py-2 bg-[#dceeff] text-carbon hover:shadow-sticker text-xs font-bold gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-mint-pop border border-black"></span>
+              <span class="max-w-[100px] truncate">{{ auth.currentUser?.name }}</span>
+            </button>
+            @if (auth.isAdmin) {
+              <button
+                (click)="openAdminModal()"
+                class="slush-pill px-3 py-2 bg-voltage-violet text-white text-xs font-black hover:shadow-sticker"
+                title="Painel de Administração">
+                Admin
+              </button>
+            }
+            <button
+              (click)="auth.logout()"
+              class="p-2 text-gray-500 hover:text-ember transition-colors"
+              title="Terminar Sessão">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+            </button>
+          </div>
+        } @else {
+          <button
+            (click)="openAuthModal('login')"
+            class="slush-pill px-4 py-2 bg-white text-carbon hover:bg-sky-wash hover:shadow-sticker text-xs font-bold">
+            Entrar
+          </button>
+        }
+
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. Hero Section: "Slush Universe" -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+    <div class="relative overflow-hidden rounded-[24px] border border-black bg-sky-wash p-8 sm:p-12 lg:p-16 shadow-sticker-lg">
+      
+      <!-- Decorative Floating Badges -->
+      <div class="absolute top-6 right-6 flex flex-wrap gap-2.5">
+        <span class="slush-badge bg-sunburst text-carbon shadow-sticker rotate-2">
+          ★ DROP 2026
+        </span>
+        <span class="slush-badge bg-mint-pop text-carbon shadow-sticker -rotate-2">
+          100% ORIGINAL
+        </span>
+        <span class="slush-badge bg-ember text-white shadow-sticker rotate-1">
+          STOCK LIMITADO
+        </span>
+      </div>
+
+      <div class="max-w-2xl relative z-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-white border border-black text-xs font-black uppercase text-electric-blue mb-4 shadow-sticker">
+          <span class="w-2 h-2 rounded-full bg-ember animate-ping"></span>
+          Nova Coleção Streetwear
+        </div>
+
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-carbon leading-[0.95] font-display mb-6">
+          INFLATE<br>
+          <span class="text-electric-blue underline decoration-carbon decoration-4 underline-offset-4">YOUR STYLE</span>.
+        </h1>
+
+        <p class="text-sm sm:text-base text-gray-700 font-medium mb-8 max-w-lg leading-relaxed">
+          O universo mais autêntico de sneakers e decals. Silhuetas icónicas, estética insuflada neo-pop e entrega rápida com autenticidade garantida.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <a
+            href="#catalogo"
+            class="slush-btn-primary text-sm font-black px-8 py-3.5 shadow-sticker">
+            Explorar Catálogo
+          </a>
+          <button
+            (click)="onBrandSelect('Nike')"
+            class="slush-btn-secondary text-sm font-bold px-6 py-3.5 shadow-sticker">
+            Ver Drops Nike
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Watermark / Ribbon Graphic Accent -->
+      <div class="absolute -right-12 -bottom-12 opacity-15 pointer-events-none select-none text-[220px] font-black tracking-tighter text-carbon leading-none font-display">
+        STRIDE
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Brand Filter & Search Bar -->
+  <section id="catalogo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-black">
+      
+      <!-- Brand Pills -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        @for (brand of brands; track brand) {
+          <button
+            (click)="onBrandSelect(brand)"
+            [class.bg-carbon]="selectedBrand === brand"
+            [class.text-white]="selectedBrand === brand"
+            [class.shadow-sticker]="selectedBrand === brand"
+            [class.bg-white]="selectedBrand !== brand"
+            [class.text-carbon]="selectedBrand !== brand"
+            class="slush-pill px-4 py-2 text-xs font-black whitespace-nowrap hover:bg-sky-wash transition-colors">
+            {{ brand }}
+          </button>
+        }
+      </div>
+
+      <!-- Price Range Filter -->
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-black uppercase text-gray-500">Filtrar Preço:</span>
+        <select
+          [(ngModel)]="selectedPriceRange"
+          (change)="onPriceChange()"
+          class="slush-pill px-4 py-2 bg-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue cursor-pointer">
+          <option value="all">Todos os Preços</option>
+          <option value="under100">Até €100</option>
+          <option value="100to150">€100 a €150</option>
+          <option value="above150">Acima de €150</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Sneakers Catalog Grid -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex-1">
+    
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <h2 class="text-2xl font-black uppercase tracking-tight font-display">
+          {{ selectedBrand === 'Todos' ? 'Todos os Ténis' : selectedBrand }}
+        </h2>
+        <span class="slush-badge bg-lavender text-carbon">
+          {{ products.length }} Modelos
+        </span>
+      </div>
+
+      @if (searchQuery) {
+        <div class="text-xs font-bold text-gray-500">
+          Resultados para: <span class="text-carbon font-black">"{{ searchQuery }}"</span>
+        </div>
+      }
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading) {
+      <div class="py-20 flex flex-col items-center justify-center gap-4">
+        <div class="w-10 h-10 border-4 border-carbon border-t-electric-blue rounded-full animate-spin"></div>
+        <span class="text-xs font-black uppercase tracking-widest text-carbon">A carregar modelos exclusivos...</span>
+      </div>
+    } @else if (products.length === 0) {
+      <!-- Empty State -->
+      <div class="slush-card p-12 text-center max-w-md mx-auto my-12 bg-white">
+        <div class="w-16 h-16 mx-auto mb-4 bg-sky-wash rounded-full border border-black flex items-center justify-center text-2xl">
+          👟
+        </div>
+        <h3 class="text-lg font-black uppercase font-display mb-2">Nenhum calçado encontrado</h3>
+        <p class="text-xs text-gray-600 mb-6">Tente ajustar a sua pesquisa ou escolher outra marca no menu de filtros.</p>
+        <button (click)="selectedBrand = 'Todos'; searchQuery = ''; loadProducts()" class="slush-btn-primary text-xs">
+          Limpar Filtros
+        </button>
+      </div>
+    } @else {
+      <!-- Products Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        @for (product of products; track product.id) {
+          <div
+            (click)="openProductModal(product)"
+            class="slush-card group cursor-pointer flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-sticker-hover bg-white">
+            
+            <!-- Sneaker Image Box -->
+            <div class="relative bg-[#f8fbff] p-6 pb-2 flex items-center justify-center border-b border-black overflow-hidden h-60">
+              
+              <!-- Badges -->
+              <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                @if (product.discountPercentage > 0) {
+                  <span class="slush-badge bg-ember text-white">
+                    -{{ product.discountPercentage }}%
+                  </span>
+                }
+                @if (product.stockQuantity <= 10 && product.stockQuantity > 0) {
+                  <span class="slush-badge bg-sunburst text-carbon">
+                    Últimos Pares
+                  </span>
+                }
+              </div>
+
+              <!-- Wishlist Heart Toggle -->
+              <button
+                (click)="toggleFavorite(product, $event)"
+                class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white border border-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sticker z-10"
+                [title]="wishlist.isWishlisted(product.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                <svg
+                  class="w-4 h-4 transition-colors"
+                  [class.text-ember]="wishlist.isWishlisted(product.id)"
+                  [class.fill-ember]="wishlist.isWishlisted(product.id)"
+                  [class.text-carbon]="!wishlist.isWishlisted(product.id)"
+                  [class.fill-none]="!wishlist.isWishlisted(product.id)"
+                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </button>
+
+              <!-- Sneaker Photo -->
+              <img
+                [src]="getProductPrimaryImage(product)"
+                [alt]="product.name"
+                class="w-full h-44 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-md">
+            </div>
+
+            <!-- Content Info -->
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <span class="text-[11px] font-black uppercase tracking-wider text-gray-500">
+                  {{ product.brand }}
+                </span>
+                <h3 class="text-sm font-black text-carbon mt-1 line-clamp-2 leading-tight group-hover:text-electric-blue transition-colors">
+                  {{ product.name }}
+                </h3>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <div>
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-base font-black text-carbon">
+                      €{{ product.finalPrice | number:'1.2-2' }}
+                    </span>
+                    @if (product.discountPercentage > 0) {
+                      <span class="text-xs text-gray-400 line-through font-bold">
+                        €{{ product.basePrice | number:'1.2-2' }}
+                      </span>
+                    }
+                  </div>
+                  <span class="text-[10px] font-bold text-mint-pop flex items-center gap-1">
+                    ● Stock: {{ product.stockQuantity }} pares
+                  </span>
+                </div>
+
+                <!-- Add to cart pill -->
+                <button
+                  (click)="quickAddToCart(product, $event)"
+                  class="slush-pill px-3.5 py-1.5 bg-carbon text-white hover:bg-electric-blue hover:shadow-sticker text-xs font-black"
+                  title="Adicionar ao Carrinho">
+                  + Add
+                </button>
+              </div>
+
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- 5. Product Detail / Quick View Modal -->
+  @if (selectedProduct) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="slush-card bg-white max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative animate-scaleIn">
+        
+        <!-- Close Button -->
+        <button
+          (click)="closeProductModal()"
+          class="absolute top-5 right-5 w-9 h-9 rounded-full border border-black bg-white hover:bg-sky-wash flex items-center justify-center font-black shadow-sticker z-10">
+          ✕
+        </button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          <!-- Image Gallery with Multiple Angles -->
+          <div class="flex flex-col gap-4">
+            <div class="bg-[#f8fbff] rounded-[18px] border border-black p-6 flex items-center justify-center h-72">
+              <img
+                [src]="selectedProduct.images && selectedProduct.images[selectedAngleIndex] ? selectedProduct.images[selectedAngleIndex].imageUrl : getProductPrimaryImage(selectedProduct)"
+                [alt]="selectedProduct.name"
+                class="w-full h-56 object-contain drop-shadow-md">
+            </div>
+
+            <!-- Angle Thumbnails -->
+            @if (selectedProduct.images && selectedProduct.images.length > 1) {
+              <div class="flex gap-2">
+                @for (img of selectedProduct.images; track img.id; let idx = $index) {
+                  <button
+                    (click)="selectedAngleIndex = idx"
+                    [class.border-electric-blue]="selectedAngleIndex === idx"
+                    [class.border-2]="selectedAngleIndex === idx"
+                    [class.border-black]="selectedAngleIndex !== idx"
+                    class="flex-1 h-16 rounded-[10px] border bg-[#f8fbff] p-1 overflow-hidden transition-all">
+                    <img [src]="img.imageUrl" class="w-full h-full object-contain">
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Product Details & Size Picker -->
+          <div class="flex flex-col justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="slush-badge bg-lavender text-carbon text-[10px]">
+                  {{ selectedProduct.brand }}
+                </span>
+                @if (selectedProduct.discountPercentage > 0) {
+                  <span class="slush-badge bg-ember text-white text-[10px]">
+                    -{{ selectedProduct.discountPercentage }}% DESCONTO
+                  </span>
+                }
+              </div>
+
+              <h2 class="text-2xl font-black text-carbon font-display mt-2 leading-tight">
+                {{ selectedProduct.name }}
+              </h2>
+
+              <!-- Price -->
+              <div class="flex items-baseline gap-3 mt-3">
+                <span class="text-3xl font-black text-carbon font-display">
+                  €{{ selectedProduct.finalPrice | number:'1.2-2' }}
+                </span>
+                @if (selectedProduct.discountPercentage > 0) {
+                  <span class="text-base text-gray-400 line-through font-bold">
+                    €{{ selectedProduct.basePrice | number:'1.2-2' }}
+                  </span>
+                }
+              </div>
+
+              <!-- Description -->
+              <p class="text-xs text-gray-600 mt-4 leading-relaxed font-medium">
+                {{ selectedProduct.description }}
+              </p>
+
+              <!-- Shoe Size Selector -->
+              <div class="mt-6">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-black uppercase">Selecionar Tamanho (EU):</span>
+                  <span class="text-[11px] font-bold text-mint-pop">
+                    ✓ Stock: {{ selectedProduct.stockQuantity }} disponíveis
+                  </span>
+                </div>
+                <div class="grid grid-cols-4 gap-2">
+                  @for (size of availableSizes; track size) {
+                    <button
+                      (click)="selectedShoeSize = size"
+                      [class.bg-carbon]="selectedShoeSize === size"
+                      [class.text-white]="selectedShoeSize === size"
+                      [class.shadow-sticker]="selectedShoeSize === size"
+                      [class.bg-white]="selectedShoeSize !== size"
+                      [class.text-carbon]="selectedShoeSize !== size"
+                      class="slush-pill py-2 text-xs font-black hover:bg-sky-wash transition-colors">
+                      {{ size }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-8 pt-4 border-t border-black flex gap-3">
+              <button
+                (click)="addToCartFromModal()"
+                class="flex-1 slush-btn-primary py-3.5 text-xs font-black shadow-sticker">
+                Adicionar ao Carrinho (Tam. {{ selectedShoeSize }})
+              </button>
+              <button
+                (click)="toggleFavorite(selectedProduct, $event)"
+                class="w-12 h-12 slush-pill bg-white flex items-center justify-center hover:bg-lavender shadow-sticker">
+                <svg
+                  class="w-5 h-5 text-ember"
+                  [class.fill-ember]="wishlist.isWishlisted(selectedProduct.id)"
+                  [class.fill-none]="!wishlist.isWishlisted(selectedProduct.id)"
+                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- 6. Cart Slide-over Drawer -->
+  @if (cart.isDrawerOpen$ | async) {
+    <div class="fixed inset-0 z-50 overflow-hidden">
+      <!-- Backdrop -->
+      <div (click)="cart.closeDrawer()" class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+
+      <div class="fixed inset-y-0 right-0 max-w-md w-full bg-white border-l border-black flex flex-col shadow-sticker-lg z-10">
+        
+        <!-- Drawer Header -->
+        <div class="p-6 border-b border-black flex items-center justify-between bg-sky-wash">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl font-black uppercase font-display">O Teu Carrinho</span>
+            <span class="slush-badge bg-sunburst text-carbon text-[10px]">
+              {{ cart.getTotalCount() }} itens
+            </span>
+          </div>
+          <button (click)="cart.closeDrawer()" class="w-8 h-8 rounded-full border border-black bg-white flex items-center justify-center font-black hover:bg-white shadow-sticker">
+            ✕
+          </button>
+        </div>
+
+        <!-- Drawer Items List -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4">
+          @if (cart.getItems().length === 0) {
+            <div class="py-20 text-center">
+              <div class="w-16 h-16 mx-auto mb-4 bg-sky-wash rounded-full border border-black flex items-center justify-center text-2xl">
+                🛍️
+              </div>
+              <h4 class="text-base font-black uppercase font-display">O carrinho está vazio</h4>
+              <p class="text-xs text-gray-500 mt-1 mb-6">Adiciona os teus ténis favoritos para começar.</p>
+              <button (click)="cart.closeDrawer()" class="slush-btn-primary text-xs">
+                Ver Catálogo
+              </button>
+            </div>
+          } @else {
+            @for (item of cart.getItems(); track item.product.id + item.shoeSize) {
+              <div class="slush-card p-4 flex gap-4 bg-[#f8fbff]">
+                <img
+                  [src]="getProductPrimaryImage(item.product)"
+                  [alt]="item.product.name"
+                  class="w-20 h-20 object-contain bg-white rounded-lg border border-black p-1">
+                
+                <div class="flex-1 flex flex-col justify-between">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <span class="text-[10px] font-black uppercase text-gray-500">{{ item.product.brand }}</span>
+                      <h4 class="text-xs font-black line-clamp-1">{{ item.product.name }}</h4>
+                      <span class="text-[11px] font-bold text-electric-blue">Tamanho: {{ item.shoeSize }}</span>
+                    </div>
+                    <button
+                      (click)="cart.removeItem(item.product.id, item.shoeSize)"
+                      class="text-gray-400 hover:text-ember text-xs font-black">
+                      ✕
+                    </button>
+                  </div>
+
+                  <div class="flex justify-between items-center mt-2">
+                    <!-- Quantity Stepper -->
+                    <div class="flex items-center gap-2 border border-black rounded-pill bg-white px-2 py-0.5">
+                      <button
+                        (click)="cart.updateQuantity(item.product.id, item.shoeSize, item.quantity - 1)"
+                        class="text-xs font-black px-1 hover:text-ember">-</button>
+                      <span class="text-xs font-black min-w-[16px] text-center">{{ item.quantity }}</span>
+                      <button
+                        (click)="cart.updateQuantity(item.product.id, item.shoeSize, item.quantity + 1)"
+                        class="text-xs font-black px-1 hover:text-electric-blue">+</button>
+                    </div>
+
+                    <span class="text-xs font-black text-carbon">
+                      €{{ (item.product.finalPrice * item.quantity) | number:'1.2-2' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Drawer Footer Checkout -->
+        @if (cart.getItems().length > 0) {
+          <div class="p-6 border-t border-black bg-white space-y-4">
+            <div class="flex justify-between items-center text-sm font-bold">
+              <span>Subtotal:</span>
+              <span class="text-base font-black">€{{ cart.getTotalPrice() | number:'1.2-2' }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center text-xs text-mint-pop font-black">
+              <span>Envio Expresso:</span>
+              <span>GRÁTIS</span>
+            </div>
+
+            <div class="pt-2 border-t border-gray-100 flex justify-between items-center text-lg font-black font-display">
+              <span>Total:</span>
+              <span class="text-electric-blue">€{{ cart.getTotalPrice() | number:'1.2-2' }}</span>
+            </div>
+
+            <button
+              (click)="handleCheckout()"
+              [disabled]="isCheckingOut"
+              class="w-full slush-btn-primary py-3.5 text-sm font-black shadow-sticker uppercase tracking-wider disabled:opacity-50">
+              @if (isCheckingOut) {
+                <span>A processar encomenda...</span>
+              } @else {
+                <span>Finalizar Compra ● €{{ cart.getTotalPrice() | number:'1.2-2' }}</span>
+              }
+            </button>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+  <!-- 7. Wishlist Modal -->
+  @if (wishlist.isModalOpen$ | async) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="slush-card bg-white max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8 relative">
+        <button
+          (click)="wishlist.closeModal()"
+          class="absolute top-5 right-5 w-8 h-8 rounded-full border border-black bg-white hover:bg-sky-wash flex items-center justify-center font-black shadow-sticker">
+          ✕
+        </button>
+
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-2xl">❤️</span>
+          <h3 class="text-2xl font-black uppercase font-display">A tua Lista de Desejos</h3>
+        </div>
+
+        @if ((wishlist.wishlistItems$ | async)?.length === 0) {
+          <div class="py-12 text-center">
+            <p class="text-xs text-gray-500 font-bold mb-4">Ainda não tens ténis favoritos guardados.</p>
+            <button (click)="wishlist.closeModal()" class="slush-btn-primary text-xs">Explorar Catálogo</button>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @for (item of (wishlist.wishlistItems$ | async); track item.id) {
+              <div class="slush-card p-4 flex gap-3 bg-[#f8fbff]">
+                <img [src]="getProductPrimaryImage(item)" [alt]="item.name" class="w-16 h-16 object-contain bg-white rounded border border-black p-1">
+                <div class="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h5 class="text-xs font-black line-clamp-1">{{ item.name }}</h5>
+                    <span class="text-xs font-black text-electric-blue">€{{ item.finalPrice | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="flex gap-2 mt-2">
+                    <button
+                      (click)="cart.addToCart(item, 41); wishlist.closeModal()"
+                      class="slush-pill px-3 py-1 bg-carbon text-white text-[10px] font-black">
+                      Adicionar
+                    </button>
+                    <button
+                      (click)="wishlist.toggleWishlist(item)"
+                      class="text-[10px] text-ember font-black">
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+  <!-- 8. Auth Modal (Login & Register) -->
+  @if (isAuthModalOpen) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="slush-card bg-white max-w-md w-full p-6 sm:p-8 relative">
+        <button
+          (click)="closeAuthModal()"
+          class="absolute top-5 right-5 w-8 h-8 rounded-full border border-black bg-white hover:bg-sky-wash flex items-center justify-center font-black shadow-sticker">
+          ✕
+        </button>
+
+        <div class="flex gap-3 border-b border-black pb-4 mb-6">
+          <button
+            (click)="authMode = 'login'"
+            [class.border-b-2]="authMode === 'login'"
+            [class.border-electric-blue]="authMode === 'login'"
+            [class.text-electric-blue]="authMode === 'login'"
+            class="text-sm font-black uppercase tracking-wider pb-1">
+            Entrar
+          </button>
+          <button
+            (click)="authMode = 'register'"
+            [class.border-b-2]="authMode === 'register'"
+            [class.border-electric-blue]="authMode === 'register'"
+            [class.text-electric-blue]="authMode === 'register'"
+            class="text-sm font-black uppercase tracking-wider pb-1 text-gray-400">
+            Criar Conta
+          </button>
+        </div>
+
+        @if (authError) {
+          <div class="mb-4 p-3 bg-ember/15 border border-ember text-ember text-xs font-bold rounded-lg">
+            {{ authError }}
+          </div>
+        }
+
+        <!-- Quick Credentials Helper -->
+        <div class="mb-5 p-3 rounded-xl border border-black bg-sky-wash text-xs">
+          <span class="font-black uppercase text-[10px] block mb-1 text-carbon">⚡ Contas Rápidas de Teste:</span>
+          <div class="flex gap-2 mt-1">
+            <button
+              (click)="quickFillUser('admin@stride.com', 'admin123')"
+              class="slush-pill px-2.5 py-1 bg-white text-[10px] font-black hover:bg-lavender">
+              Admin (admin@stride.com)
+            </button>
+            <button
+              (click)="quickFillUser('user@stride.com', 'user123')"
+              class="slush-pill px-2.5 py-1 bg-white text-[10px] font-black hover:bg-mint-pop">
+              Cliente (user@stride.com)
+            </button>
+          </div>
+        </div>
+
+        @if (authMode === 'login') {
+          <form (submit)="handleLogin()" class="space-y-4">
+            <div>
+              <label class="block text-xs font-black uppercase mb-1">E-mail:</label>
+              <input
+                type="email"
+                [(ngModel)]="loginEmail"
+                name="email"
+                required
+                class="w-full px-4 py-2.5 rounded-pill border border-black text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-black uppercase mb-1">Senha:</label>
+              <input
+                type="password"
+                [(ngModel)]="loginPassword"
+                name="password"
+                required
+                class="w-full px-4 py-2.5 rounded-pill border border-black text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue">
+            </div>
+            <button
+              type="submit"
+              class="w-full slush-btn-primary py-3 text-xs font-black shadow-sticker uppercase tracking-wider mt-4">
+              Iniciar Sessão
+            </button>
+          </form>
+        } @else {
+          <form (submit)="handleRegister()" class="space-y-4">
+            <div>
+              <label class="block text-xs font-black uppercase mb-1">Nome Completo:</label>
+              <input
+                type="text"
+                [(ngModel)]="registerName"
+                name="name"
+                required
+                class="w-full px-4 py-2.5 rounded-pill border border-black text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-black uppercase mb-1">E-mail:</label>
+              <input
+                type="email"
+                [(ngModel)]="registerEmail"
+                name="email"
+                required
+                class="w-full px-4 py-2.5 rounded-pill border border-black text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue">
+            </div>
+            <div>
+              <label class="block text-xs font-black uppercase mb-1">Senha:</label>
+              <input
+                type="password"
+                [(ngModel)]="registerPassword"
+                name="password"
+                required
+                class="w-full px-4 py-2.5 rounded-pill border border-black text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue">
+            </div>
+            <button
+              type="submit"
+              class="w-full slush-btn-primary py-3 text-xs font-black shadow-sticker uppercase tracking-wider mt-4">
+              Criar Conta Stride
+            </button>
+          </form>
+        }
+
+      </div>
+    </div>
+  }
+
+  <!-- 9. Order History Modal -->
+  @if (isOrdersModalOpen) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="slush-card bg-white max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8 relative">
+        <button
+          (click)="closeOrdersModal()"
+          class="absolute top-5 right-5 w-8 h-8 rounded-full border border-black bg-white hover:bg-sky-wash flex items-center justify-center font-black shadow-sticker">
+          ✕
+        </button>
+
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-2xl">📦</span>
+          <div>
+            <h3 class="text-2xl font-black uppercase font-display">As Tuas Encomendas</h3>
+            <span class="text-xs text-gray-500 font-bold">{{ auth.currentUser?.email }}</span>
+          </div>
+        </div>
+
+        @if (isLoadingOrders) {
+          <div class="py-12 text-center text-xs font-black uppercase">A carregar histórico...</div>
+        } @else if (myOrders.length === 0) {
+          <div class="py-12 text-center">
+            <p class="text-xs text-gray-500 font-bold mb-4">Ainda não realizaste nenhuma encomenda.</p>
+            <button (click)="closeOrdersModal()" class="slush-btn-primary text-xs">Ir para a Loja</button>
+          </div>
+        } @else {
+          <div class="space-y-4">
+            @for (order of myOrders; track order.id) {
+              <div class="slush-card p-4 bg-[#f8fbff]">
+                <div class="flex justify-between items-start border-b border-black pb-2 mb-3">
+                  <div>
+                    <span class="text-[10px] font-black uppercase text-gray-500">ID: #{{ order.id.slice(0, 8) }}</span>
+                    <div class="text-xs font-bold text-gray-500">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                  </div>
+                  <span class="slush-badge bg-mint-pop text-carbon text-[10px]">
+                    {{ order.status }}
+                  </span>
+                </div>
+
+                <div class="space-y-2 mb-3">
+                  @for (item of order.items; track item.id) {
+                    <div class="flex justify-between text-xs">
+                      <span class="font-bold">{{ item.quantity }}x {{ item.productName }}</span>
+                      <span class="font-black">€{{ (item.priceAtPurchase * item.quantity) | number:'1.2-2' }}</span>
+                    </div>
+                  }
+                </div>
+
+                <div class="pt-2 border-t border-gray-200 flex justify-between items-center text-sm font-black">
+                  <span>Total Pago:</span>
+                  <span class="text-electric-blue">€{{ order.totalAmount | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+  <!-- 10. Admin Dashboard Modal -->
+  @if (isAdminModalOpen) {
+    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="slush-card bg-white max-w-3xl w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8 relative">
+        <button
+          (click)="closeAdminModal()"
+          class="absolute top-5 right-5 w-8 h-8 rounded-full border border-black bg-white hover:bg-sky-wash flex items-center justify-center font-black shadow-sticker">
+          ✕
+        </button>
+
+        <div class="flex items-center gap-3 mb-6">
+          <span class="w-3 h-3 rounded-full bg-electric-blue border border-black animate-pulse"></span>
+          <h3 class="text-2xl font-black uppercase font-display">Painel Administrativo Stride</h3>
+        </div>
+
+        @if (dashboardStats) {
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+            <div class="slush-card p-4 bg-sky-wash">
+              <span class="text-[10px] font-black uppercase text-gray-600 block">Vendas Totais</span>
+              <span class="text-2xl font-black text-carbon font-display mt-1 block">
+                €{{ (dashboardStats.totalRevenue || 0) | number:'1.2-2' }}
+              </span>
+            </div>
+            <div class="slush-card p-4 bg-mint-pop">
+              <span class="text-[10px] font-black uppercase text-gray-600 block">Encomendas</span>
+              <span class="text-2xl font-black text-carbon font-display mt-1 block">
+                {{ dashboardStats.totalOrders }}
+              </span>
+            </div>
+            <div class="slush-card p-4 bg-lavender">
+              <span class="text-[10px] font-black uppercase text-gray-600 block">Produtos Ativos</span>
+              <span class="text-2xl font-black text-carbon font-display mt-1 block">
+                {{ dashboardStats.totalProducts }}
+              </span>
+            </div>
+            <div class="slush-card p-4 bg-sunburst">
+              <span class="text-[10px] font-black uppercase text-gray-600 block">Utilizadores</span>
+              <span class="text-2xl font-black text-carbon font-display mt-1 block">
+                {{ dashboardStats.totalUsers }}
+              </span>
+            </div>
+            <div class="slush-card p-4 bg-ember text-white">
+              <span class="text-[10px] font-black uppercase block opacity-90">Stock Baixo (&lt;5)</span>
+              <span class="text-2xl font-black font-display mt-1 block">
+                {{ dashboardStats.lowStockProducts }}
+              </span>
+            </div>
+            <div class="slush-card p-4 bg-white">
+              <span class="text-[10px] font-black uppercase text-gray-600 block">Base de Dados</span>
+              <span class="text-sm font-black text-mint-pop mt-2 block">
+                ● PostgreSQL Ativo
+              </span>
+            </div>
+          </div>
+        }
+
+        <div class="border-t border-black pt-4 flex justify-between items-center text-xs">
+          <span class="font-bold text-gray-500">API Swagger: <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="text-electric-blue underline font-black">localhost:8080/swagger-ui.html</a></span>
+          <button (click)="closeAdminModal()" class="slush-pill px-4 py-2 bg-carbon text-white font-black">Fechar</button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>

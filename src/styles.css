@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#f4f7fb] text-carbon font-sans antialiased selection:bg-electric-blue selection:text-white;
+  }
+}
+
+@layer components {
+  /* Slush Sticker Elements */
+  .slush-pill {
+    @apply rounded-pill border border-carbon transition-all duration-150 inline-flex items-center justify-center font-bold;
+  }
+
+  .slush-card {
+    @apply bg-white rounded-card border border-carbon shadow-sticker transition-all duration-200;
+  }
+
+  .slush-badge {
+    @apply px-3 py-1 rounded-pill border border-carbon text-xs font-black uppercase tracking-wider inline-flex items-center gap-1.5;
+  }
+
+  .slush-btn-primary {
+    @apply slush-pill bg-electric-blue text-white px-6 py-2.5 hover:shadow-sticker active:translate-x-0.5 active:translate-y-0.5;
+  }
+
+  .slush-btn-secondary {
+    @apply slush-pill bg-white text-carbon px-6 py-2.5 hover:bg-sky-wash hover:shadow-sticker active:translate-x-0.5 active:translate-y-0.5;
+  }
+
+  .slush-btn-ember {
+    @apply slush-pill bg-ember text-white px-6 py-2.5 hover:shadow-sticker active:translate-x-0.5 active:translate-y-0.5;
+  }
+
+  .slush-btn-mint {
+    @apply slush-pill bg-mint-pop text-carbon px-6 py-2.5 hover:shadow-sticker active:translate-x-0.5 active:translate-y-0.5;
+  }
+}
