@@ -107,4 +107,11 @@ export class ApiService {
       headers: this.getHeaders()
     });
   }
+
+  updateStock(id: string, stockQuantity: number): Observable<Product> {
+    return this.http.patch<Product>(`${this.baseUrl}/admin/products/${id}/stock`, { stockQuantity }, {
+      headers: this.getHeaders()
+    });
+  }
 }
+

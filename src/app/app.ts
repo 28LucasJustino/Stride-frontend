@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
-import { CartService, CartItem } from './services/cart.service';
+import { CartService } from './services/cart.service';
 import { WishlistService } from './services/wishlist.service';
+import { I18nService } from './services/i18n.service';
 import { Product } from './models/product.model';
 import { OrderResponse, DashboardStats } from './models/order.model';
 
@@ -15,15 +16,19 @@ import { OrderResponse, DashboardStats } from './models/order.model';
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   // Catalog State
   products: Product[] = [];
   featuredProducts: Product[] = [];
-  brands: string[] = ['Todos', 'Nike', 'Adidas', 'Jordan', 'New Balance', 'Puma', 'Vans', 'Asics'];
+  brands: string[] = ['Todos', 'Nike', 'Jordan', 'Adidas', 'New Balance', 'Puma', 'Vans', 'Asics', 'Salomon', 'Converse', 'Reebok'];
   selectedBrand: string = 'Todos';
   searchQuery: string = '';
   selectedPriceRange: string = 'all';
   isLoading: boolean = false;
+
+  // Promotional Carousel State
+  activeSlideIndex: number = 0;
+  private carouselInterval: any;
 
   // Selected Product for Quick View / Detail Modal
   selectedProduct: Product | null = null;
@@ -34,6 +39,7 @@ export class AppComponent implements OnInit {
   // Modals & Drawers
   isAuthModalOpen: boolean = false;
   authMode: 'login' | 'register' = 'login';
+  isAdminLoginRedirect: boolean = false;
   loginEmail: string = '';
   loginPassword: string = '';
   registerName: string = '';
@@ -46,8 +52,12 @@ export class AppComponent implements OnInit {
   myOrders: OrderResponse[] = [];
   isLoadingOrders: boolean = false;
 
+  // Admin Dashboard & Inventory
   isAdminModalOpen: boolean = false;
   dashboardStats: DashboardStats | null = null;
+  adminProducts: Product[] = [];
+  adminSearchQuery: string = '';
+  isUpdatingStock: boolean = false;
 
   checkoutSuccessMessage: string = '';
   isCheckingOut: boolean = false;
@@ -56,14 +66,46 @@ export class AppComponent implements OnInit {
     public api: ApiService,
     public auth: AuthService,
     public cart: CartService,
-    public wishlist: WishlistService
+    public wishlist: WishlistService,
+    public i18n: I18nService
   ) {}
 
   ngOnInit(): void {
     this.loadProducts();
     this.loadFeaturedProducts();
+    this.startCarouselAutoSlide();
   }
 
+  ngOnDestroy(): void {
+    this.stopCarouselAutoSlide();
+  }
+
+  // Carousel Methods
+  startCarouselAutoSlide(): void {
+    this.carouselInterval = setInterval(() => {
+      this.nextSlide();
+    }, 6000);
+  }
+
+  stopCarouselAutoSlide(): void {
+    if (this.carouselInterval) {
+      clearInterval(this.carouselInterval);
+    }
+  }
+
+  nextSlide(): void {
+    this.activeSlideIndex = (this.activeSlideIndex + 1) % 3;
+  }
+
+  prevSlide(): void {
+    this.activeSlideIndex = (this.activeSlideIndex - 1 + 3) % 3;
+  }
+
+  goToSlide(index: number): void {
+    this.activeSlideIndex = index;
+  }
+
+  // Catalog Methods
   loadProducts(): void {
     this.isLoading = true;
     const brandParam = this.selectedBrand === 'Todos' ? undefined : this.selectedBrand;
@@ -85,7 +127,7 @@ export class AppComponent implements OnInit {
       query: this.searchQuery ? this.searchQuery : undefined,
       minPrice,
       maxPrice,
-      size: 24
+      size: 60
     }).subscribe({
       next: (response) => {
         this.products = response.content;
@@ -99,7 +141,7 @@ export class AppComponent implements OnInit {
   }
 
   loadFeaturedProducts(): void {
-    this.api.getFeaturedProducts(4).subscribe({
+    this.api.getFeaturedProducts(6).subscribe({
       next: (data) => this.featuredProducts = data,
       error: () => {}
     });
@@ -171,21 +213,24 @@ export class AppComponent implements OnInit {
         this.isCheckingOut = false;
         this.cart.clearCart();
         this.cart.closeDrawer();
-        this.checkoutSuccessMessage = `Encomenda #${order.id.slice(0, 8)} confirmada com sucesso! Enviámos os detalhes para o seu e-mail.`;
+        this.checkoutSuccessMessage = this.i18n.currentLang === 'pt' ?
+          `Encomenda #${order.id.slice(0, 8)} confirmada com sucesso! Enviámos os detalhes para o seu e-mail.` :
+          `Order #${order.id.slice(0, 8)} confirmed! Details have been sent to your email.`;
         setTimeout(() => {
           this.checkoutSuccessMessage = '';
         }, 6000);
       },
       error: (err) => {
         this.isCheckingOut = false;
-        alert(err.error?.message || 'Erro ao processar o checkout. Verifique o stock disponível.');
+        alert(err.error?.message || (this.i18n.currentLang === 'pt' ? 'Erro ao processar checkout.' : 'Error processing checkout.'));
       }
     });
   }
 
   // Auth Modal
-  openAuthModal(mode: 'login' | 'register' = 'login'): void {
+  openAuthModal(mode: 'login' | 'register' = 'login', isAdminIntent = false): void {
     this.authMode = mode;
+    this.isAdminLoginRedirect = isAdminIntent;
     this.authError = '';
     this.authSuccess = '';
     this.isAuthModalOpen = true;
@@ -193,6 +238,7 @@ export class AppComponent implements OnInit {
 
   closeAuthModal(): void {
     this.isAuthModalOpen = false;
+    this.isAdminLoginRedirect = false;
   }
 
   quickFillUser(email: string, pass: string): void {
@@ -204,17 +250,21 @@ export class AppComponent implements OnInit {
   handleLogin(): void {
     this.authError = '';
     if (!this.loginEmail || !this.loginPassword) {
-      this.authError = 'Preencha todos os campos.';
+      this.authError = this.i18n.currentLang === 'pt' ? 'Preencha todos os campos.' : 'Please fill all fields.';
       return;
     }
 
     this.api.login({ email: this.loginEmail, password: this.loginPassword }).subscribe({
       next: (res) => {
         this.auth['handleAuthSuccess'](res);
+        const shouldOpenAdmin = this.isAdminLoginRedirect && res.role === 'ROLE_ADMIN';
         this.closeAuthModal();
+        if (shouldOpenAdmin) {
+          this.openAdminModal();
+        }
       },
       error: () => {
-        this.authError = 'Email ou senha incorretos.';
+        this.authError = this.i18n.currentLang === 'pt' ? 'Email ou senha incorretos.' : 'Invalid email or password.';
       }
     });
   }
@@ -222,7 +272,7 @@ export class AppComponent implements OnInit {
   handleRegister(): void {
     this.authError = '';
     if (!this.registerName || !this.registerEmail || !this.registerPassword) {
-      this.authError = 'Preencha todos os campos.';
+      this.authError = this.i18n.currentLang === 'pt' ? 'Preencha todos os campos.' : 'Please fill all fields.';
       return;
     }
 
@@ -236,7 +286,7 @@ export class AppComponent implements OnInit {
         this.closeAuthModal();
       },
       error: (err) => {
-        this.authError = err.error?.message || 'Erro ao criar conta.';
+        this.authError = err.error?.message || (this.i18n.currentLang === 'pt' ? 'Erro ao criar conta.' : 'Error creating account.');
       }
     });
   }
@@ -264,20 +314,60 @@ export class AppComponent implements OnInit {
     this.isOrdersModalOpen = false;
   }
 
-  // Admin
+  // Admin Dashboard & Inventory
   openAdminModal(): void {
-    if (!this.auth.isAdmin) return;
+    if (!this.auth.isAdmin) {
+      // Prompt user to sign in as Admin
+      this.openAuthModal('login', true);
+      return;
+    }
     this.isAdminModalOpen = true;
+    this.loadAdminData();
+  }
+
+  closeAdminModal(): void {
+    this.isAdminModalOpen = false;
+  }
+
+  loadAdminData(): void {
     this.api.getDashboardStats().subscribe({
       next: (stats) => {
         this.dashboardStats = stats;
       },
       error: (err) => console.error(err)
     });
+
+    this.api.getProducts({ size: 100 }).subscribe({
+      next: (res) => {
+        this.adminProducts = res.content;
+      },
+      error: (err) => console.error(err)
+    });
   }
 
-  closeAdminModal(): void {
-    this.isAdminModalOpen = false;
+  get filteredAdminProducts(): Product[] {
+    if (!this.adminSearchQuery.trim()) return this.adminProducts;
+    const q = this.adminSearchQuery.toLowerCase();
+    return this.adminProducts.filter(p =>
+      p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)
+    );
+  }
+
+  adjustStock(product: Product, delta: number): void {
+    const newQty = Math.max(0, product.stockQuantity + delta);
+    this.api.updateStock(product.id, newQty).subscribe({
+      next: (updated) => {
+        product.stockQuantity = updated.stockQuantity;
+        // Also update in main catalog
+        const catItem = this.products.find(p => p.id === product.id);
+        if (catItem) {
+          catItem.stockQuantity = updated.stockQuantity;
+        }
+        // Refresh stats
+        this.api.getDashboardStats().subscribe(stats => this.dashboardStats = stats);
+      },
+      error: (err) => console.error(err)
+    });
   }
 
   getProductPrimaryImage(product: Product): string {

@@ -37,3 +37,4 @@ export interface DashboardStats {
   totalUsers: number;
   lowStockProducts: number;
 }
+

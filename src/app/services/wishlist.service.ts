@@ -72,3 +72,4 @@ export class WishlistService {
     this.isModalOpenSubject.next(false);
   }
 }
+

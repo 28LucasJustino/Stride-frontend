@@ -11,6 +11,33 @@
     </div>
   }
 
+  <!-- 0. Top Announcement Bar (Ticker) -->
+  <div class="bg-carbon text-white py-2 px-4 text-[11px] font-black uppercase tracking-wider overflow-hidden border-b border-black">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none py-0.5">
+        <span class="flex items-center gap-1.5 text-sunburst">{{ i18n.t('ticker.coupon') }}</span>
+        <span class="opacity-30">●</span>
+        <span class="flex items-center gap-1.5 text-mint-pop">{{ i18n.t('ticker.shipping') }}</span>
+        <span class="opacity-30">●</span>
+        <span class="flex items-center gap-1.5 text-[#dceeff]">{{ i18n.t('ticker.auth') }}</span>
+      </div>
+
+      <!-- Language Selector in Top Bar -->
+      <div class="flex items-center gap-1.5 pl-4 border-l border-white/20">
+        <button
+          (click)="i18n.toggleLanguage()"
+          class="flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-white/40 bg-white/10 hover:bg-white/20 transition-all text-[10px] font-black">
+          @if (i18n.currentLang === 'pt') {
+            <span>🇧🇷 PT-BR</span>
+          } @else {
+            <span>🇺🇸 EN</span>
+          }
+          <span class="text-[9px] opacity-70">⇄</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 1. Header & Navigation -->
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-black">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
@@ -35,7 +62,7 @@
             type="text"
             [(ngModel)]="searchQuery"
             (keyup.enter)="onSearch()"
-            placeholder="Pesquisar Dunk, Jordan, Campus, New Balance..."
+            [placeholder]="i18n.t('header.search_placeholder')"
             class="w-full pl-11 pr-4 py-2.5 rounded-pill border border-black bg-[#f8fbff] text-xs font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-blue transition-all"
           >
           <svg class="w-4 h-4 text-carbon absolute left-4 top-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -48,7 +75,30 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center gap-2.5 sm:gap-3">
+      <div class="flex items-center gap-2 sm:gap-3">
+
+        <!-- Language Pill Switcher -->
+        <button
+          (click)="i18n.toggleLanguage()"
+          class="slush-pill px-3 py-1.5 bg-white text-carbon hover:bg-sky-wash text-xs font-black border border-black"
+          [title]="i18n.currentLang === 'pt' ? 'Mudar para Inglês' : 'Switch to Portuguese'">
+          {{ i18n.currentLang === 'pt' ? '🇧🇷 PT' : '🇺🇸 EN' }}
+        </button>
+
+        <!-- Admin Panel Button (Always Visible & Accessible) -->
+        <button
+          (click)="openAdminModal()"
+          class="slush-pill px-3.5 py-2 text-xs font-black border border-black transition-all"
+          [class.bg-voltage-violet]="auth.isAdmin"
+          [class.text-white]="auth.isAdmin"
+          [class.bg-white]="!auth.isAdmin"
+          [class.text-voltage-violet]="!auth.isAdmin"
+          [class.hover:bg-voltage-violet]="!auth.isAdmin"
+          [class.hover:text-white]="!auth.isAdmin"
+          title="Aceder ao Painel Administrativo">
+          <span class="w-2 h-2 rounded-full border border-black mr-1" [class.bg-mint-pop]="auth.isAdmin" [class.bg-ember]="!auth.isAdmin"></span>
+          {{ i18n.t('header.admin') }}
+        </button>
 
         <!-- Wishlist Button -->
         <button
@@ -57,7 +107,7 @@
           <svg class="w-4 h-4 text-ember fill-ember" viewBox="0 0 24 24">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
           </svg>
-          <span class="hidden sm:inline">Favoritos</span>
+          <span class="hidden sm:inline">{{ i18n.t('header.wishlist') }}</span>
           <span class="bg-carbon text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
             {{ (wishlist.wishlistIds$ | async)?.size || 0 }}
           </span>
@@ -70,7 +120,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
           </svg>
-          <span class="hidden sm:inline">Carrinho</span>
+          <span class="hidden sm:inline">{{ i18n.t('header.cart') }}</span>
           <span class="bg-sunburst text-carbon text-[10px] font-black px-1.5 py-0.5 rounded-full border border-black">
             {{ cart.getTotalCount() }}
           </span>
@@ -81,22 +131,15 @@
           <div class="flex items-center gap-2">
             <button
               (click)="openOrdersModal()"
-              class="slush-pill px-3.5 py-2 bg-[#dceeff] text-carbon hover:shadow-sticker text-xs font-bold gap-1.5">
+              class="slush-pill px-3.5 py-2 bg-[#dceeff] text-carbon hover:shadow-sticker text-xs font-bold gap-1.5"
+              title="Ver minhas encomendas">
               <span class="w-2 h-2 rounded-full bg-mint-pop border border-black"></span>
-              <span class="max-w-[100px] truncate">{{ auth.currentUser?.name }}</span>
+              <span class="max-w-[90px] truncate">{{ auth.currentUser?.name }}</span>
             </button>
-            @if (auth.isAdmin) {
-              <button
-                (click)="openAdminModal()"
-                class="slush-pill px-3 py-2 bg-voltage-violet text-white text-xs font-black hover:shadow-sticker"
-                title="Painel de Administração">
-                Admin
-              </button>
-            }
             <button
               (click)="auth.logout()"
               class="p-2 text-gray-500 hover:text-ember transition-colors"
-              title="Terminar Sessão">
+              [title]="i18n.t('header.logout')">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
               </svg>
@@ -106,7 +149,7 @@
           <button
             (click)="openAuthModal('login')"
             class="slush-pill px-4 py-2 bg-white text-carbon hover:bg-sky-wash hover:shadow-sticker text-xs font-bold">
-            Entrar
+            {{ i18n.t('header.login') }}
           </button>
         }
 
@@ -114,54 +157,171 @@
     </div>
   </header>
 
-  <!-- 2. Hero Section: "Slush Universe" -->
+  <!-- 2. Promotions & Announcements Carousel (Slush Universe) -->
   <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-    <div class="relative overflow-hidden rounded-[24px] border border-black bg-sky-wash p-8 sm:p-12 lg:p-16 shadow-sticker-lg">
-      
-      <!-- Decorative Floating Badges -->
-      <div class="absolute top-6 right-6 flex flex-wrap gap-2.5">
-        <span class="slush-badge bg-sunburst text-carbon shadow-sticker rotate-2">
-          ★ DROP 2026
-        </span>
-        <span class="slush-badge bg-mint-pop text-carbon shadow-sticker -rotate-2">
-          100% ORIGINAL
-        </span>
-        <span class="slush-badge bg-ember text-white shadow-sticker rotate-1">
-          STOCK LIMITADO
-        </span>
+    <div
+      (mouseenter)="stopCarouselAutoSlide()"
+      (mouseleave)="startCarouselAutoSlide()"
+      class="relative overflow-hidden rounded-[24px] border border-black p-8 sm:p-12 lg:p-16 shadow-sticker-lg transition-all duration-300"
+      [class.bg-sky-wash]="activeSlideIndex === 0"
+      [class.bg-lavender]="activeSlideIndex === 1"
+      [class.bg-[#e6fbf0]]="activeSlideIndex === 2">
+
+      <!-- Slide 1: Neo-Pop Drop 2026 -->
+      @if (activeSlideIndex === 0) {
+        <div class="animate-fadeIn">
+          <div class="absolute top-6 right-6 flex flex-wrap gap-2.5 z-10">
+            <span class="slush-badge bg-sunburst text-carbon shadow-sticker rotate-2">
+              {{ i18n.t('promo.slide1_badge') }}
+            </span>
+            <span class="slush-badge bg-mint-pop text-carbon shadow-sticker -rotate-2">
+              100% ORIGINAL
+            </span>
+          </div>
+
+          <div class="max-w-2xl relative z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-white border border-black text-xs font-black uppercase text-electric-blue mb-4 shadow-sticker">
+              <span class="w-2 h-2 rounded-full bg-ember animate-ping"></span>
+              {{ i18n.currentLang === 'pt' ? 'Nova Coleção Streetwear' : 'New Streetwear Collection' }}
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tight text-carbon leading-[0.98] font-display mb-4">
+              {{ i18n.t('promo.slide1_title') }}
+            </h1>
+
+            <p class="text-xs sm:text-sm text-gray-700 font-medium mb-6 max-w-lg leading-relaxed">
+              {{ i18n.t('promo.slide1_desc') }}
+            </p>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <a
+                href="#catalogo"
+                class="slush-btn-primary text-xs sm:text-sm font-black px-7 py-3 shadow-sticker">
+                {{ i18n.t('promo.slide1_cta') }}
+              </a>
+              <button
+                (click)="onBrandSelect('Nike')"
+                class="slush-btn-secondary text-xs sm:text-sm font-bold px-6 py-3 shadow-sticker">
+                Nike Drops
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Slide 2: Retro Summer Drops -->
+      @if (activeSlideIndex === 1) {
+        <div class="animate-fadeIn">
+          <div class="absolute top-6 right-6 flex flex-wrap gap-2.5 z-10">
+            <span class="slush-badge bg-ember text-white shadow-sticker rotate-2">
+              {{ i18n.t('promo.slide2_badge') }}
+            </span>
+            <span class="slush-badge bg-lavender text-carbon shadow-sticker -rotate-1">
+              DUNK & CAMPUS
+            </span>
+          </div>
+
+          <div class="max-w-2xl relative z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-white border border-black text-xs font-black uppercase text-voltage-violet mb-4 shadow-sticker">
+              <span class="w-2 h-2 rounded-full bg-sunburst"></span>
+              {{ i18n.currentLang === 'pt' ? 'Catálogo 50 Modelos Disponíveis' : '50 Models In Stock' }}
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tight text-carbon leading-[0.98] font-display mb-4">
+              {{ i18n.t('promo.slide2_title') }}
+            </h1>
+
+            <p class="text-xs sm:text-sm text-gray-700 font-medium mb-6 max-w-lg leading-relaxed">
+              {{ i18n.t('promo.slide2_desc') }}
+            </p>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <a
+                href="#catalogo"
+                class="slush-pill bg-ember text-white px-7 py-3 text-xs sm:text-sm font-black shadow-sticker hover:bg-black">
+                {{ i18n.t('promo.slide2_cta') }}
+              </a>
+              <button
+                (click)="onBrandSelect('Adidas')"
+                class="slush-btn-secondary text-xs sm:text-sm font-bold px-6 py-3 shadow-sticker">
+                Adidas Originals
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Slide 3: Free Express Shipping -->
+      @if (activeSlideIndex === 2) {
+        <div class="animate-fadeIn">
+          <div class="absolute top-6 right-6 flex flex-wrap gap-2.5 z-10">
+            <span class="slush-badge bg-mint-pop text-carbon shadow-sticker rotate-1">
+              {{ i18n.t('promo.slide3_badge') }}
+            </span>
+            <span class="slush-badge bg-sunburst text-carbon shadow-sticker -rotate-2">
+              STICKER DECAL PACK
+            </span>
+          </div>
+
+          <div class="max-w-2xl relative z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-white border border-black text-xs font-black uppercase text-carbon mb-4 shadow-sticker">
+              <span class="w-2 h-2 rounded-full bg-mint-pop"></span>
+              {{ i18n.currentLang === 'pt' ? 'Garantia de Autenticidade Stride' : 'Stride Authenticity Guarantee' }}
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tight text-carbon leading-[0.98] font-display mb-4">
+              {{ i18n.t('promo.slide3_title') }}
+            </h1>
+
+            <p class="text-xs sm:text-sm text-gray-700 font-medium mb-6 max-w-lg leading-relaxed">
+              {{ i18n.t('promo.slide3_desc') }}
+            </p>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <a
+                href="#catalogo"
+                class="slush-pill bg-carbon text-white px-7 py-3 text-xs sm:text-sm font-black shadow-sticker hover:bg-electric-blue">
+                {{ i18n.t('promo.slide3_cta') }}
+              </a>
+              <button
+                (click)="onBrandSelect('Jordan')"
+                class="slush-btn-secondary text-xs sm:text-sm font-bold px-6 py-3 shadow-sticker">
+                Air Jordan
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Carousel Navigation Controls -->
+      <div class="absolute bottom-5 right-6 flex items-center gap-2 z-20">
+        <button
+          (click)="prevSlide()"
+          class="w-9 h-9 rounded-full bg-white border border-black flex items-center justify-center font-black shadow-sticker hover:bg-sky-wash active:scale-95"
+          title="Anterior">
+          ‹
+        </button>
+        <div class="flex items-center gap-1.5 px-2">
+          @for (idx of [0, 1, 2]; track idx) {
+            <button
+              (click)="goToSlide(idx)"
+              class="w-3 h-3 rounded-full border border-black transition-all"
+              [class.bg-carbon]="activeSlideIndex === idx"
+              [class.scale-125]="activeSlideIndex === idx"
+              [class.bg-white]="activeSlideIndex !== idx">
+            </button>
+          }
+        </div>
+        <button
+          (click)="nextSlide()"
+          class="w-9 h-9 rounded-full bg-white border border-black flex items-center justify-center font-black shadow-sticker hover:bg-sky-wash active:scale-95"
+          title="Próximo">
+          ›
+        </button>
       </div>
 
-      <div class="max-w-2xl relative z-10">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-white border border-black text-xs font-black uppercase text-electric-blue mb-4 shadow-sticker">
-          <span class="w-2 h-2 rounded-full bg-ember animate-ping"></span>
-          Nova Coleção Streetwear
-        </div>
-
-        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-carbon leading-[0.95] font-display mb-6">
-          INFLATE<br>
-          <span class="text-electric-blue underline decoration-carbon decoration-4 underline-offset-4">YOUR STYLE</span>.
-        </h1>
-
-        <p class="text-sm sm:text-base text-gray-700 font-medium mb-8 max-w-lg leading-relaxed">
-          O universo mais autêntico de sneakers e decals. Silhuetas icónicas, estética insuflada neo-pop e entrega rápida com autenticidade garantida.
-        </p>
-
-        <div class="flex flex-wrap items-center gap-4">
-          <a
-            href="#catalogo"
-            class="slush-btn-primary text-sm font-black px-8 py-3.5 shadow-sticker">
-            Explorar Catálogo
-          </a>
-          <button
-            (click)="onBrandSelect('Nike')"
-            class="slush-btn-secondary text-sm font-bold px-6 py-3.5 shadow-sticker">
-            Ver Drops Nike
-          </button>
-        </div>
-      </div>
-
-      <!-- Hero Watermark / Ribbon Graphic Accent -->
-      <div class="absolute -right-12 -bottom-12 opacity-15 pointer-events-none select-none text-[220px] font-black tracking-tighter text-carbon leading-none font-display">
+      <!-- Watermark Background -->
+      <div class="absolute -right-12 -bottom-12 opacity-10 pointer-events-none select-none text-[220px] font-black tracking-tighter text-carbon leading-none font-display">
         STRIDE
       </div>
     </div>
@@ -182,43 +342,43 @@
             [class.bg-white]="selectedBrand !== brand"
             [class.text-carbon]="selectedBrand !== brand"
             class="slush-pill px-4 py-2 text-xs font-black whitespace-nowrap hover:bg-sky-wash transition-colors">
-            {{ brand }}
+            {{ brand === 'Todos' ? (i18n.currentLang === 'pt' ? 'Todos' : 'All') : brand }}
           </button>
         }
       </div>
 
       <!-- Price Range Filter -->
       <div class="flex items-center gap-3">
-        <span class="text-xs font-black uppercase text-gray-500">Filtrar Preço:</span>
+        <span class="text-xs font-black uppercase text-gray-500">{{ i18n.t('catalog.filter_price') }}</span>
         <select
           [(ngModel)]="selectedPriceRange"
           (change)="onPriceChange()"
           class="slush-pill px-4 py-2 bg-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue cursor-pointer">
-          <option value="all">Todos os Preços</option>
-          <option value="under100">Até €100</option>
-          <option value="100to150">€100 a €150</option>
-          <option value="above150">Acima de €150</option>
+          <option value="all">{{ i18n.t('catalog.all_prices') }}</option>
+          <option value="under100">{{ i18n.t('catalog.under_100') }}</option>
+          <option value="100to150">{{ i18n.t('catalog.100_to_150') }}</option>
+          <option value="above150">{{ i18n.t('catalog.above_150') }}</option>
         </select>
       </div>
     </div>
   </section>
 
-  <!-- 4. Sneakers Catalog Grid -->
+  <!-- 4. Sneakers Catalog Grid (50 Items) -->
   <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex-1">
     
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <h2 class="text-2xl font-black uppercase tracking-tight font-display">
-          {{ selectedBrand === 'Todos' ? 'Todos os Ténis' : selectedBrand }}
+          {{ selectedBrand === 'Todos' ? i18n.t('catalog.title_all') : selectedBrand }}
         </h2>
         <span class="slush-badge bg-lavender text-carbon">
-          {{ products.length }} Modelos
+          {{ products.length }} {{ i18n.t('catalog.models') }}
         </span>
       </div>
 
       @if (searchQuery) {
         <div class="text-xs font-bold text-gray-500">
-          Resultados para: <span class="text-carbon font-black">"{{ searchQuery }}"</span>
+          {{ i18n.t('catalog.results_for') }}: <span class="text-carbon font-black">"{{ searchQuery }}"</span>
         </div>
       }
     </div>
@@ -227,7 +387,7 @@
     @if (isLoading) {
       <div class="py-20 flex flex-col items-center justify-center gap-4">
         <div class="w-10 h-10 border-4 border-carbon border-t-electric-blue rounded-full animate-spin"></div>
-        <span class="text-xs font-black uppercase tracking-widest text-carbon">A carregar modelos exclusivos...</span>
+        <span class="text-xs font-black uppercase tracking-widest text-carbon">{{ i18n.t('catalog.loading') }}</span>
       </div>
     } @else if (products.length === 0) {
       <!-- Empty State -->
@@ -235,10 +395,10 @@
         <div class="w-16 h-16 mx-auto mb-4 bg-sky-wash rounded-full border border-black flex items-center justify-center text-2xl">
           👟
         </div>
-        <h3 class="text-lg font-black uppercase font-display mb-2">Nenhum calçado encontrado</h3>
-        <p class="text-xs text-gray-600 mb-6">Tente ajustar a sua pesquisa ou escolher outra marca no menu de filtros.</p>
+        <h3 class="text-lg font-black uppercase font-display mb-2">{{ i18n.t('catalog.empty_title') }}</h3>
+        <p class="text-xs text-gray-600 mb-6">{{ i18n.t('catalog.empty_desc') }}</p>
         <button (click)="selectedBrand = 'Todos'; searchQuery = ''; loadProducts()" class="slush-btn-primary text-xs">
-          Limpar Filtros
+          {{ i18n.t('catalog.clear_filters') }}
         </button>
       </div>
     } @else {
@@ -261,16 +421,23 @@
                 }
                 @if (product.stockQuantity <= 10 && product.stockQuantity > 0) {
                   <span class="slush-badge bg-sunburst text-carbon">
-                    Últimos Pares
+                    {{ i18n.t('catalog.last_pairs') }}
                   </span>
                 }
               </div>
+
+              <!-- Multi-angle Indicator Pill -->
+              @if (product.images && product.images.length > 1) {
+                <div class="absolute bottom-2 left-3 bg-white/90 border border-black text-[10px] font-black px-2 py-0.5 rounded-full z-10 shadow-sm">
+                  📷 {{ product.images.length }} {{ i18n.currentLang === 'pt' ? 'ângulos' : 'angles' }}
+                </div>
+              }
 
               <!-- Wishlist Heart Toggle -->
               <button
                 (click)="toggleFavorite(product, $event)"
                 class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white border border-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sticker z-10"
-                [title]="wishlist.isWishlisted(product.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                [title]="wishlist.isWishlisted(product.id) ? 'Remover' : 'Favoritar'">
                 <svg
                   class="w-4 h-4 transition-colors"
                   [class.text-ember]="wishlist.isWishlisted(product.id)"
@@ -286,6 +453,7 @@
               <img
                 [src]="getProductPrimaryImage(product)"
                 [alt]="product.name"
+                loading="lazy"
                 class="w-full h-44 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-md">
             </div>
 
@@ -313,7 +481,7 @@
                     }
                   </div>
                   <span class="text-[10px] font-bold text-mint-pop flex items-center gap-1">
-                    ● Stock: {{ product.stockQuantity }} pares
+                    ● {{ i18n.t('catalog.stock') }} {{ product.stockQuantity }} {{ i18n.t('catalog.pairs') }}
                   </span>
                 </div>
 
@@ -322,7 +490,7 @@
                   (click)="quickAddToCart(product, $event)"
                   class="slush-pill px-3.5 py-1.5 bg-carbon text-white hover:bg-electric-blue hover:shadow-sticker text-xs font-black"
                   title="Adicionar ao Carrinho">
-                  + Add
+                  {{ i18n.t('catalog.add_btn') }}
                 </button>
               </div>
 
@@ -333,7 +501,7 @@
     }
   </section>
 
-  <!-- 5. Product Detail / Quick View Modal -->
+  <!-- 5. Product Detail / Quick View Modal (Multi-angle photos) -->
   @if (selectedProduct) {
     <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="slush-card bg-white max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative animate-scaleIn">
@@ -365,8 +533,11 @@
                     [class.border-electric-blue]="selectedAngleIndex === idx"
                     [class.border-2]="selectedAngleIndex === idx"
                     [class.border-black]="selectedAngleIndex !== idx"
-                    class="flex-1 h-16 rounded-[10px] border bg-[#f8fbff] p-1 overflow-hidden transition-all">
+                    class="flex-1 h-16 rounded-[10px] border bg-[#f8fbff] p-1 overflow-hidden transition-all relative">
                     <img [src]="img.imageUrl" class="w-full h-full object-contain">
+                    <span class="absolute bottom-0.5 right-1 text-[8px] font-black uppercase bg-white/90 px-1 rounded border border-black/30">
+                      {{ img.angleType }}
+                    </span>
                   </button>
                 }
               </div>
@@ -382,7 +553,7 @@
                 </span>
                 @if (selectedProduct.discountPercentage > 0) {
                   <span class="slush-badge bg-ember text-white text-[10px]">
-                    -{{ selectedProduct.discountPercentage }}% DESCONTO
+                    -{{ selectedProduct.discountPercentage }}% {{ i18n.t('product.discount_badge') }}
                   </span>
                 }
               </div>
@@ -411,9 +582,9 @@
               <!-- Shoe Size Selector -->
               <div class="mt-6">
                 <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-black uppercase">Selecionar Tamanho (EU):</span>
+                  <span class="text-xs font-black uppercase">{{ i18n.t('product.select_size') }}</span>
                   <span class="text-[11px] font-bold text-mint-pop">
-                    ✓ Stock: {{ selectedProduct.stockQuantity }} disponíveis
+                    ✓ {{ i18n.t('catalog.stock') }} {{ selectedProduct.stockQuantity }} {{ i18n.t('product.available') }}
                   </span>
                 </div>
                 <div class="grid grid-cols-4 gap-2">
@@ -438,7 +609,7 @@
               <button
                 (click)="addToCartFromModal()"
                 class="flex-1 slush-btn-primary py-3.5 text-xs font-black shadow-sticker">
-                Adicionar ao Carrinho (Tam. {{ selectedShoeSize }})
+                {{ i18n.t('product.add_cart_btn') }} ({{ i18n.t('product.size') }} {{ selectedShoeSize }})
               </button>
               <button
                 (click)="toggleFavorite(selectedProduct, $event)"
@@ -472,9 +643,9 @@
         <!-- Drawer Header -->
         <div class="p-6 border-b border-black flex items-center justify-between bg-sky-wash">
           <div class="flex items-center gap-2.5">
-            <span class="text-xl font-black uppercase font-display">O Teu Carrinho</span>
+            <span class="text-xl font-black uppercase font-display">{{ i18n.t('cart.title') }}</span>
             <span class="slush-badge bg-sunburst text-carbon text-[10px]">
-              {{ cart.getTotalCount() }} itens
+              {{ cart.getTotalCount() }} {{ i18n.t('cart.items') }}
             </span>
           </div>
           <button (click)="cart.closeDrawer()" class="w-8 h-8 rounded-full border border-black bg-white flex items-center justify-center font-black hover:bg-white shadow-sticker">
@@ -489,10 +660,10 @@
               <div class="w-16 h-16 mx-auto mb-4 bg-sky-wash rounded-full border border-black flex items-center justify-center text-2xl">
                 🛍️
               </div>
-              <h4 class="text-base font-black uppercase font-display">O carrinho está vazio</h4>
-              <p class="text-xs text-gray-500 mt-1 mb-6">Adiciona os teus ténis favoritos para começar.</p>
+              <h4 class="text-base font-black uppercase font-display">{{ i18n.t('cart.empty_title') }}</h4>
+              <p class="text-xs text-gray-500 mt-1 mb-6">{{ i18n.t('cart.empty_desc') }}</p>
               <button (click)="cart.closeDrawer()" class="slush-btn-primary text-xs">
-                Ver Catálogo
+                {{ i18n.t('cart.explore') }}
               </button>
             </div>
           } @else {
@@ -508,7 +679,7 @@
                     <div>
                       <span class="text-[10px] font-black uppercase text-gray-500">{{ item.product.brand }}</span>
                       <h4 class="text-xs font-black line-clamp-1">{{ item.product.name }}</h4>
-                      <span class="text-[11px] font-bold text-electric-blue">Tamanho: {{ item.shoeSize }}</span>
+                      <span class="text-[11px] font-bold text-electric-blue">{{ i18n.t('cart.size') }} {{ item.shoeSize }}</span>
                     </div>
                     <button
                       (click)="cart.removeItem(item.product.id, item.shoeSize)"
@@ -543,17 +714,17 @@
         @if (cart.getItems().length > 0) {
           <div class="p-6 border-t border-black bg-white space-y-4">
             <div class="flex justify-between items-center text-sm font-bold">
-              <span>Subtotal:</span>
+              <span>{{ i18n.t('cart.subtotal') }}</span>
               <span class="text-base font-black">€{{ cart.getTotalPrice() | number:'1.2-2' }}</span>
             </div>
             
             <div class="flex justify-between items-center text-xs text-mint-pop font-black">
-              <span>Envio Expresso:</span>
-              <span>GRÁTIS</span>
+              <span>{{ i18n.t('cart.shipping') }}</span>
+              <span>{{ i18n.t('cart.free') }}</span>
             </div>
 
             <div class="pt-2 border-t border-gray-100 flex justify-between items-center text-lg font-black font-display">
-              <span>Total:</span>
+              <span>{{ i18n.t('cart.total') }}</span>
               <span class="text-electric-blue">€{{ cart.getTotalPrice() | number:'1.2-2' }}</span>
             </div>
 
@@ -562,9 +733,9 @@
               [disabled]="isCheckingOut"
               class="w-full slush-btn-primary py-3.5 text-sm font-black shadow-sticker uppercase tracking-wider disabled:opacity-50">
               @if (isCheckingOut) {
-                <span>A processar encomenda...</span>
+                <span>{{ i18n.t('cart.processing') }}</span>
               } @else {
-                <span>Finalizar Compra ● €{{ cart.getTotalPrice() | number:'1.2-2' }}</span>
+                <span>{{ i18n.t('cart.checkout_btn') }} ● €{{ cart.getTotalPrice() | number:'1.2-2' }}</span>
               }
             </button>
           </div>
@@ -586,13 +757,13 @@
 
         <div class="flex items-center gap-3 mb-6">
           <span class="text-2xl">❤️</span>
-          <h3 class="text-2xl font-black uppercase font-display">A tua Lista de Desejos</h3>
+          <h3 class="text-2xl font-black uppercase font-display">{{ i18n.t('wishlist.title') }}</h3>
         </div>
 
         @if ((wishlist.wishlistItems$ | async)?.length === 0) {
           <div class="py-12 text-center">
-            <p class="text-xs text-gray-500 font-bold mb-4">Ainda não tens ténis favoritos guardados.</p>
-            <button (click)="wishlist.closeModal()" class="slush-btn-primary text-xs">Explorar Catálogo</button>
+            <p class="text-xs text-gray-500 font-bold mb-4">{{ i18n.t('wishlist.empty') }}</p>
+            <button (click)="wishlist.closeModal()" class="slush-btn-primary text-xs">{{ i18n.t('cart.explore') }}</button>
           </div>
         } @else {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -608,12 +779,12 @@
                     <button
                       (click)="cart.addToCart(item, 41); wishlist.closeModal()"
                       class="slush-pill px-3 py-1 bg-carbon text-white text-[10px] font-black">
-                      Adicionar
+                      {{ i18n.t('wishlist.add') }}
                     </button>
                     <button
                       (click)="wishlist.toggleWishlist(item)"
                       class="text-[10px] text-ember font-black">
-                      Remover
+                      {{ i18n.t('wishlist.remove') }}
                     </button>
                   </div>
                 </div>
@@ -629,12 +800,19 @@
   <!-- 8. Auth Modal (Login & Register) -->
   @if (isAuthModalOpen) {
     <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="slush-card bg-white max-w-md w-full p-6 sm:p-8 relative">
+      <div class="slush-card bg-white max-w-md w-full p-6 sm:p-8 relative animate-scaleIn">
         <button
           (click)="closeAuthModal()"
           class="absolute top-5 right-5 w-8 h-8 rounded-full border border-black bg-white hover:bg-sky-wash flex items-center justify-center font-black shadow-sticker">
           ✕
         </button>
+
+        @if (isAdminLoginRedirect) {
+          <div class="mb-4 p-3 bg-voltage-violet/10 border-2 border-voltage-violet rounded-xl text-xs font-bold text-voltage-violet flex items-center gap-2">
+            <span class="text-base">🔐</span>
+            <span>{{ i18n.t('admin.access_notice') }}</span>
+          </div>
+        }
 
         <div class="flex gap-3 border-b border-black pb-4 mb-6">
           <button
@@ -643,7 +821,7 @@
             [class.border-electric-blue]="authMode === 'login'"
             [class.text-electric-blue]="authMode === 'login'"
             class="text-sm font-black uppercase tracking-wider pb-1">
-            Entrar
+            {{ i18n.t('auth.signin_tab') }}
           </button>
           <button
             (click)="authMode = 'register'"
@@ -651,7 +829,7 @@
             [class.border-electric-blue]="authMode === 'register'"
             [class.text-electric-blue]="authMode === 'register'"
             class="text-sm font-black uppercase tracking-wider pb-1 text-gray-400">
-            Criar Conta
+            {{ i18n.t('auth.signup_tab') }}
           </button>
         </div>
 
@@ -663,17 +841,21 @@
 
         <!-- Quick Credentials Helper -->
         <div class="mb-5 p-3 rounded-xl border border-black bg-sky-wash text-xs">
-          <span class="font-black uppercase text-[10px] block mb-1 text-carbon">⚡ Contas Rápidas de Teste:</span>
-          <div class="flex gap-2 mt-1">
+          <span class="font-black uppercase text-[10px] block mb-1 text-carbon">{{ i18n.t('auth.quick_title') }}</span>
+          <div class="flex flex-wrap gap-2 mt-1">
             <button
               (click)="quickFillUser('admin@stride.com', 'admin123')"
-              class="slush-pill px-2.5 py-1 bg-white text-[10px] font-black hover:bg-lavender">
-              Admin (admin@stride.com)
+              class="slush-pill px-3 py-1 text-[10px] font-black border border-black transition-all"
+              [class.bg-voltage-violet]="isAdminLoginRedirect"
+              [class.text-white]="isAdminLoginRedirect"
+              [class.bg-white]="!isAdminLoginRedirect"
+              [class.hover:bg-lavender]="!isAdminLoginRedirect">
+              👑 Admin (admin@stride.com)
             </button>
             <button
               (click)="quickFillUser('user@stride.com', 'user123')"
-              class="slush-pill px-2.5 py-1 bg-white text-[10px] font-black hover:bg-mint-pop">
-              Cliente (user@stride.com)
+              class="slush-pill px-3 py-1 bg-white text-[10px] font-black hover:bg-mint-pop border border-black">
+              👤 Cliente (user@stride.com)
             </button>
           </div>
         </div>
@@ -681,7 +863,7 @@
         @if (authMode === 'login') {
           <form (submit)="handleLogin()" class="space-y-4">
             <div>
-              <label class="block text-xs font-black uppercase mb-1">E-mail:</label>
+              <label class="block text-xs font-black uppercase mb-1">{{ i18n.t('auth.email') }}</label>
               <input
                 type="email"
                 [(ngModel)]="loginEmail"
@@ -690,7 +872,7 @@
                 class="w-full px-4 py-2.5 rounded-pill border border-black text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue">
             </div>
             <div>
-              <label class="block text-xs font-black uppercase mb-1">Senha:</label>
+              <label class="block text-xs font-black uppercase mb-1">{{ i18n.t('auth.password') }}</label>
               <input
                 type="password"
                 [(ngModel)]="loginPassword"
@@ -701,13 +883,13 @@
             <button
               type="submit"
               class="w-full slush-btn-primary py-3 text-xs font-black shadow-sticker uppercase tracking-wider mt-4">
-              Iniciar Sessão
+              {{ i18n.t('auth.btn_login') }}
             </button>
           </form>
         } @else {
           <form (submit)="handleRegister()" class="space-y-4">
             <div>
-              <label class="block text-xs font-black uppercase mb-1">Nome Completo:</label>
+              <label class="block text-xs font-black uppercase mb-1">{{ i18n.t('auth.name') }}</label>
               <input
                 type="text"
                 [(ngModel)]="registerName"
@@ -716,7 +898,7 @@
                 class="w-full px-4 py-2.5 rounded-pill border border-black text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue">
             </div>
             <div>
-              <label class="block text-xs font-black uppercase mb-1">E-mail:</label>
+              <label class="block text-xs font-black uppercase mb-1">{{ i18n.t('auth.email') }}</label>
               <input
                 type="email"
                 [(ngModel)]="registerEmail"
@@ -725,7 +907,7 @@
                 class="w-full px-4 py-2.5 rounded-pill border border-black text-xs font-bold focus:outline-none focus:ring-2 focus:ring-electric-blue">
             </div>
             <div>
-              <label class="block text-xs font-black uppercase mb-1">Senha:</label>
+              <label class="block text-xs font-black uppercase mb-1">{{ i18n.t('auth.password') }}</label>
               <input
                 type="password"
                 [(ngModel)]="registerPassword"
@@ -736,7 +918,7 @@
             <button
               type="submit"
               class="w-full slush-btn-primary py-3 text-xs font-black shadow-sticker uppercase tracking-wider mt-4">
-              Criar Conta Stride
+              {{ i18n.t('auth.btn_register') }}
             </button>
           </form>
         }
@@ -758,17 +940,17 @@
         <div class="flex items-center gap-3 mb-6">
           <span class="text-2xl">📦</span>
           <div>
-            <h3 class="text-2xl font-black uppercase font-display">As Tuas Encomendas</h3>
+            <h3 class="text-2xl font-black uppercase font-display">{{ i18n.t('orders.title') }}</h3>
             <span class="text-xs text-gray-500 font-bold">{{ auth.currentUser?.email }}</span>
           </div>
         </div>
 
         @if (isLoadingOrders) {
-          <div class="py-12 text-center text-xs font-black uppercase">A carregar histórico...</div>
+          <div class="py-12 text-center text-xs font-black uppercase">A carregar...</div>
         } @else if (myOrders.length === 0) {
           <div class="py-12 text-center">
-            <p class="text-xs text-gray-500 font-bold mb-4">Ainda não realizaste nenhuma encomenda.</p>
-            <button (click)="closeOrdersModal()" class="slush-btn-primary text-xs">Ir para a Loja</button>
+            <p class="text-xs text-gray-500 font-bold mb-4">{{ i18n.t('orders.empty') }}</p>
+            <button (click)="closeOrdersModal()" class="slush-btn-primary text-xs">{{ i18n.t('cart.explore') }}</button>
           </div>
         } @else {
           <div class="space-y-4">
@@ -794,7 +976,7 @@
                 </div>
 
                 <div class="pt-2 border-t border-gray-200 flex justify-between items-center text-sm font-black">
-                  <span>Total Pago:</span>
+                  <span>{{ i18n.t('orders.paid') }}</span>
                   <span class="text-electric-blue">€{{ order.totalAmount | number:'1.2-2' }}</span>
                 </div>
               </div>
@@ -806,65 +988,150 @@
     </div>
   }
 
-  <!-- 10. Admin Dashboard Modal -->
+  <!-- 10. Admin Dashboard & Inventory Modal (Cleaned: DB & API info removed) -->
   @if (isAdminModalOpen) {
     <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="slush-card bg-white max-w-3xl w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8 relative">
-        <button
-          (click)="closeAdminModal()"
-          class="absolute top-5 right-5 w-8 h-8 rounded-full border border-black bg-white hover:bg-sky-wash flex items-center justify-center font-black shadow-sticker">
-          ✕
-        </button>
-
-        <div class="flex items-center gap-3 mb-6">
-          <span class="w-3 h-3 rounded-full bg-electric-blue border border-black animate-pulse"></span>
-          <h3 class="text-2xl font-black uppercase font-display">Painel Administrativo Stride</h3>
+      <div class="slush-card bg-white max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative animate-scaleIn">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b border-black pb-4 mb-6">
+          <div class="flex items-center gap-3">
+            <span class="w-3.5 h-3.5 rounded-full bg-voltage-violet border border-black animate-pulse"></span>
+            <div>
+              <h3 class="text-2xl font-black uppercase font-display">{{ i18n.t('admin.title') }}</h3>
+              <span class="text-xs font-bold text-gray-500">{{ auth.currentUser?.name }} ({{ auth.currentUser?.email }})</span>
+            </div>
+          </div>
+          <button
+            (click)="closeAdminModal()"
+            class="w-9 h-9 rounded-full border border-black bg-white hover:bg-sky-wash flex items-center justify-center font-black shadow-sticker">
+            ✕
+          </button>
         </div>
 
+        <!-- 5 Business Metric Cards -->
         @if (dashboardStats) {
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-            <div class="slush-card p-4 bg-sky-wash">
-              <span class="text-[10px] font-black uppercase text-gray-600 block">Vendas Totais</span>
-              <span class="text-2xl font-black text-carbon font-display mt-1 block">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+            <div class="slush-card p-3.5 bg-sky-wash">
+              <span class="text-[9px] font-black uppercase text-gray-600 block">{{ i18n.t('admin.total_revenue') }}</span>
+              <span class="text-xl font-black text-carbon font-display mt-1 block">
                 €{{ (dashboardStats.totalRevenue || 0) | number:'1.2-2' }}
               </span>
             </div>
-            <div class="slush-card p-4 bg-mint-pop">
-              <span class="text-[10px] font-black uppercase text-gray-600 block">Encomendas</span>
-              <span class="text-2xl font-black text-carbon font-display mt-1 block">
+            <div class="slush-card p-3.5 bg-mint-pop">
+              <span class="text-[9px] font-black uppercase text-gray-600 block">{{ i18n.t('admin.total_orders') }}</span>
+              <span class="text-xl font-black text-carbon font-display mt-1 block">
                 {{ dashboardStats.totalOrders }}
               </span>
             </div>
-            <div class="slush-card p-4 bg-lavender">
-              <span class="text-[10px] font-black uppercase text-gray-600 block">Produtos Ativos</span>
-              <span class="text-2xl font-black text-carbon font-display mt-1 block">
+            <div class="slush-card p-3.5 bg-lavender">
+              <span class="text-[9px] font-black uppercase text-gray-600 block">{{ i18n.t('admin.active_products') }}</span>
+              <span class="text-xl font-black text-carbon font-display mt-1 block">
                 {{ dashboardStats.totalProducts }}
               </span>
             </div>
-            <div class="slush-card p-4 bg-sunburst">
-              <span class="text-[10px] font-black uppercase text-gray-600 block">Utilizadores</span>
-              <span class="text-2xl font-black text-carbon font-display mt-1 block">
+            <div class="slush-card p-3.5 bg-sunburst">
+              <span class="text-[9px] font-black uppercase text-gray-600 block">{{ i18n.t('admin.total_users') }}</span>
+              <span class="text-xl font-black text-carbon font-display mt-1 block">
                 {{ dashboardStats.totalUsers }}
               </span>
             </div>
-            <div class="slush-card p-4 bg-ember text-white">
-              <span class="text-[10px] font-black uppercase block opacity-90">Stock Baixo (&lt;5)</span>
-              <span class="text-2xl font-black font-display mt-1 block">
+            <div class="slush-card p-3.5 bg-ember text-white">
+              <span class="text-[9px] font-black uppercase block opacity-90">{{ i18n.t('admin.low_stock') }}</span>
+              <span class="text-xl font-black font-display mt-1 block">
                 {{ dashboardStats.lowStockProducts }}
-              </span>
-            </div>
-            <div class="slush-card p-4 bg-white">
-              <span class="text-[10px] font-black uppercase text-gray-600 block">Base de Dados</span>
-              <span class="text-sm font-black text-mint-pop mt-2 block">
-                ● PostgreSQL Ativo
               </span>
             </div>
           </div>
         }
 
-        <div class="border-t border-black pt-4 flex justify-between items-center text-xs">
-          <span class="font-bold text-gray-500">API Swagger: <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="text-electric-blue underline font-black">localhost:8080/swagger-ui.html</a></span>
-          <button (click)="closeAdminModal()" class="slush-pill px-4 py-2 bg-carbon text-white font-black">Fechar</button>
+        <!-- Interactive Inventory Management Section -->
+        <div class="mt-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2">
+              <h4 class="text-base font-black uppercase font-display">{{ i18n.t('admin.inventory_title') }}</h4>
+              <span class="slush-badge bg-sky-wash text-carbon text-[10px]">
+                {{ adminProducts.length }} itens
+              </span>
+            </div>
+
+            <!-- Search in inventory -->
+            <div class="w-full sm:w-64">
+              <input
+                type="text"
+                [(ngModel)]="adminSearchQuery"
+                [placeholder]="i18n.t('admin.search_product')"
+                class="w-full px-3 py-1.5 rounded-pill border border-black bg-[#f8fbff] text-xs font-bold focus:outline-none focus:ring-1 focus:ring-electric-blue">
+            </div>
+          </div>
+
+          <!-- Inventory Table -->
+          <div class="border border-black rounded-[16px] overflow-hidden bg-white shadow-sticker">
+            <div class="max-h-80 overflow-y-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-sky-wash border-b border-black text-[10px] font-black uppercase text-carbon sticky top-0 z-10">
+                  <tr>
+                    <th class="p-3">{{ i18n.t('admin.col_product') }}</th>
+                    <th class="p-3">{{ i18n.t('admin.col_brand') }}</th>
+                    <th class="p-3">{{ i18n.t('admin.col_price') }}</th>
+                    <th class="p-3">{{ i18n.t('admin.col_stock') }}</th>
+                    <th class="p-3 text-right">{{ i18n.t('admin.col_actions') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 font-medium">
+                  @for (prod of filteredAdminProducts; track prod.id) {
+                    <tr class="hover:bg-[#f8fbff] transition-colors">
+                      <td class="p-3 flex items-center gap-2.5">
+                        <img [src]="getProductPrimaryImage(prod)" class="w-9 h-9 object-contain bg-white rounded border border-black p-0.5">
+                        <span class="font-black text-carbon line-clamp-1 max-w-[200px]">{{ prod.name }}</span>
+                      </td>
+                      <td class="p-3 font-bold text-gray-500">{{ prod.brand }}</td>
+                      <td class="p-3 font-black text-carbon">€{{ prod.finalPrice | number:'1.2-2' }}</td>
+                      <td class="p-3">
+                        <span
+                          class="slush-badge text-[10px]"
+                          [class.bg-mint-pop]="prod.stockQuantity > 5"
+                          [class.bg-ember]="prod.stockQuantity <= 5"
+                          [class.text-white]="prod.stockQuantity <= 5"
+                          [class.text-carbon]="prod.stockQuantity > 5">
+                          {{ prod.stockQuantity }} pares
+                        </span>
+                      </td>
+                      <td class="p-3 text-right">
+                        <div class="inline-flex items-center gap-1">
+                          <button
+                            (click)="adjustStock(prod, -1)"
+                            class="w-7 h-7 rounded-full border border-black bg-white hover:bg-ember hover:text-white font-black text-xs transition-colors"
+                            title="Diminuir 1 par">
+                            -
+                          </button>
+                          <button
+                            (click)="adjustStock(prod, 1)"
+                            class="w-7 h-7 rounded-full border border-black bg-white hover:bg-mint-pop font-black text-xs transition-colors"
+                            title="Adicionar 1 par">
+                            +
+                          </button>
+                          <button
+                            (click)="adjustStock(prod, 5)"
+                            class="px-2 py-1 rounded-pill border border-black bg-white hover:bg-electric-blue hover:text-white font-black text-[10px] transition-colors"
+                            title="Adicionar 5 pares">
+                            +5
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="border-t border-black mt-6 pt-4 flex justify-end items-center">
+          <button (click)="closeAdminModal()" class="slush-pill px-6 py-2.5 bg-carbon text-white text-xs font-black hover:bg-electric-blue">
+            {{ i18n.t('admin.close') }}
+          </button>
         </div>
 
       </div>

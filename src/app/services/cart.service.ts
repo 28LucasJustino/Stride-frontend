@@ -109,3 +109,4 @@ export class CartService {
     this.isDrawerOpenSubject.next(!this.isDrawerOpenSubject.value);
   }
 }
+
