@@ -404,3 +404,4 @@ export class I18nService {
     return item[this.currentLang] || item['pt'] || key;
   }
 }
+
